@@ -1,0 +1,46 @@
+#!/usr/bin/env lua5.3
+
+require "util"
+require "args"
+require "compile"
+
+local outputname = "a.out"
+
+function args:printhelpheader()
+	print("usage: "..arg[0]:match("([%w_]+)").." [options] [source ...]")
+end
+
+function options:help()
+	args:printhelp()
+end
+options.help:init("print help")
+
+function options:output(target)
+	outputname = target
+end
+options.output:init("set output file", 1, "<file>")
+
+local params = args:parse(arg)
+if not params then
+	os.exit(1)
+end
+
+local ifiles = {}
+
+for i, param in ipairs(params) do
+	local ifile, error= io.open(param, "r")
+	if ifile then
+		ifiles[i] = ifile
+	else
+		printf("error: %s", error)
+		for _, ifile in ipairs(ifiles) do
+			ifile:close()
+		end
+		return 1
+	end
+end
+
+for _, ifile in ipairs(ifiles) do
+	token:tokenize(ifile)
+	ifile:close()
+end
