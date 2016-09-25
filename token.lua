@@ -13,11 +13,11 @@ function token:tokenize(file)
 	local next = file:read(1)
 	while next do
 		if c == 1 then
-			io.write(string.format("#G%d: #", l))
+			io.write(string.format("#bD%d:# #b", l))
 		end
 		if next == "\r" then next = file:read(1) end
 		if next == "\n" then
-			io.writef(" #R%d#", c)
+			io.writef("# #bD%d#", c)
 			c = 1
 			l = l + 1
 		else

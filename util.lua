@@ -120,19 +120,61 @@ function printf(format, ...)
 end
 
 local _format = string.format
-local colors = {
-	["#"] = "#",
-	[""] = "\x1B[0m",
-	R = "\x1B[31m",
-	G = "\x1B[32m",
-	Y = "\x1B[33m",
-	B = "\x1B[34m",
-	M = "\x1B[35m",
-	C = "\x1B[36m",
-	W = "\x1B[37m",
+
+local modes = {
+	b = "1",
+	f = "2",
+	i = "3",
+	u = "4",
+	n = "7",
+	h = "8",
+	s = "9",
 }
+
+local fgcolors = {
+	[""] = "39",
+	D = "30",
+	R = "31",
+	G = "32",
+	Y = "33",
+	B = "34",
+	M = "35",
+	C = "36",
+	W = "37",
+}
+
+local bgcolors = {
+	[""] = "49",
+	D = "40",
+	R = "41",
+	G = "42",
+	Y = "44",
+	B = "44",
+	M = "45",
+	C = "46",
+	W = "47",
+}
+
+local function sequence(mode, fg, bg)
+	local args
+	if mode == "" and fg == "" and bg == "" then
+		args = "0"
+	else
+		if mode == "#" then
+			return "#"
+		end
+		mode = modes[mode]
+		fg = fgcolors[fg]
+		bg = bgcolors[bg]
+		if mode then args = mode end
+		if fg then args = args and args..";"..fg or fg end
+		if bg then args = args and args..";"..bg or bg end
+	end
+	return "\x1B["..args.."m"
+end
+
 function string:format(...)
-	return _format(string.gsub(self, "#([#RGYBMCW]?)", colors), ...)
+	return _format(string.gsub(self, "#([#_bfiunhs]?)([_DRGYBMCW]?)([_DRGYBMCW]?)", sequence), ...)
 end
 
 function io.writef(f, ...)
