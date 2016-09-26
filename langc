@@ -53,12 +53,17 @@ token.types["repeat"] = "keyword"
 token.types["until"] = "keyword"
 
 token.types["="] = "assign"
-token.types["+"] = "add"
-token.types["-"] = "subtract"
-token.types["*"] = "multiply"
-token.types["/"] = "divide"
-token.types["%"] = "modulus"
-token.types[".."] = "concat"
+for op, name in pairs({
+	["+"] = "add",
+	["-"] = "subtract",
+	["*"] = "multiply",
+	["/"] = "divide",
+	["%"] = "modulus",
+	[".."] = "concat"
+}) do
+	token.types[op.."="] = name.." assign"
+	token.types[op] = name
+end
 
 token.types["["] = "lbracket"
 token.types["]"] = "rbracket"
@@ -172,9 +177,13 @@ function token.types:stringliteral(c)
 	end
 end
 
+-- for _, t in ipairs(token.types) do
+-- 	print(t)
+-- end
+
 for _, ifile in ipairs(ifiles) do
 	for t, l, c in token.tokenize(ifile) do
-		print(t, l, c)
+		print(t, l, c, type(t) == "table" and t.type)
 	end
 	ifile:close()
 end

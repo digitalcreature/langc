@@ -8,7 +8,7 @@ token.type = setmetatable({}, {
 		local t = {}
 		t.__index = t
 		function t:__tostring()
-			return string.format("#Rtoken#[#G%s# (#B%s#)]", tostring(self.value), self.type.name)
+			return string.format(self.color.."%s#", tostring(self.value))
 		end
 		t.type = t
 		t.name = name
@@ -23,6 +23,7 @@ token.type = setmetatable({}, {
 	tt.__index = tt
 
 	tt.finalpattern = "[^%w_]"
+	tt.color = "#"
 
 	--prepare to start matching this token type
 	function tt:startmatching()
@@ -53,13 +54,13 @@ token.type = setmetatable({}, {
 	end
 
 	function tt:__tostring()
-		return string.format("#ftokentype#[%s (%s)]", self.name, self.value)
+		return string.format("#ftokentype#["..self.color.."%s# (%s)]", self.name, self.value)
 	end
 
 	--initialize a new token instance of this token type, with the passed value as that token's value.
 	function tt:__call(value)
 		local token = setmetatable({
-			value = value
+			value = value,
 		}, self)
 		return token
 	end
@@ -73,6 +74,7 @@ token.types = setmetatable({}, {
 			if type(v) == "string" then
 				if v == "keyword" then
 					tokentype = token.type(v, k)
+					tokentype.color = "#Y"
 					rawset(self, k, tokentype)
 				else
 					tokentype = token.type(v, k, ".")
@@ -125,37 +127,27 @@ function token.tokenize(file)
 			candidates[type] = true
 			remaining = remaining + 1
 		end
-		local lastmatch, lastsl, lastsc, lastl, lastc
 		while next do
 			fragment = fragment..next
 			for _, type in ipairs(token.types) do
 				if candidates[type] then
-					local result = type:nextchar(next)
+					local result, error = type:nextchar(next)
 					if result == true then
 						candidates[type] = nil
 						remaining = remaining - 1
+						if remaining == 0 then
+							getnext()
+							return string.format("#bRcould not parse token \'#%s#bR\'#", fragment)
+								..(error and ":\n"..error or ""), sl, sc, l, c
+						end
 					else
 						if result then
-							if remaining == 1 then
-								return result, sl, sc, l, c
-							else
-								candidates[type] = nil
-								remaining = remaining - 1
-								lastmatch, lastsl, lastsc, lastl, lastc
-									= result, sl, sc, l, c
-							end
+							return result, sl, sc, l, c
 						end
 					end
 				end
 			end
 			getnext()
-			if remaining == 0 then
-				if lastmatch then
-					return lastmatch, lastsl, lastsc, lastl, lastc
-				else
-					return string.format("could not parse token \'%s\'", fragment), sl, sc, l, c
-				end
-			end
 		end
 	end
 end
