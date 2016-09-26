@@ -174,7 +174,7 @@ local function sequence(mode, fg, bg)
 end
 
 function string:format(...)
-	return _format(string.gsub(self, "#([#_bfiunhs]?)([_DRGYBMCW]?)([_DRGYBMCW]?)", sequence), ...)
+	return _format(string.gsub(self, "#([#_bfiunhs]?)([_DRGYBMCW]?)([_DRGYBMCW]?)$?", sequence), ...)
 end
 
 function io.writef(f, ...)
