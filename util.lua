@@ -122,37 +122,37 @@ end
 local _format = string.format
 
 local modes = {
-	b = "1",
-	f = "2",
-	i = "3",
-	u = "4",
-	n = "7",
-	h = "8",
-	s = "9",
+	b = "1",	-- bold
+	f = "2",	-- faint
+	i = "3",	-- italic
+	u = "4",	-- underline
+	n = "7",	-- negative (switch fg and bg colors)
+	h = "8",	-- hidden
+	s = "9",	-- strikethrough
 }
 
 local fgcolors = {
-	[""] = "39",
-	D = "30",
-	R = "31",
-	G = "32",
-	Y = "33",
-	B = "34",
-	M = "35",
-	C = "36",
-	W = "37",
+	[""] = "39",	-- reset foreground color
+	D = "30",		-- black ("dark")
+	R = "31",		-- red
+	G = "32",		-- green
+	Y = "33",		-- yellow
+	B = "34",		-- blue
+	M = "35",		-- magenta
+	C = "36",		-- cyan
+	W = "37",		-- white
 }
 
 local bgcolors = {
-	[""] = "49",
-	D = "40",
-	R = "41",
-	G = "42",
-	Y = "44",
-	B = "44",
-	M = "45",
-	C = "46",
-	W = "47",
+	[""] = "49",	-- reset background color
+	D = "40",		-- black ("dark")
+	R = "41",		-- red
+	G = "42",		-- green
+	Y = "44",		-- yellow
+	B = "44",		-- blue
+	M = "45",		-- magenta
+	C = "46",		-- cyan
+	W = "47",		-- white
 }
 
 local function sequence(mode, fg, bg)
