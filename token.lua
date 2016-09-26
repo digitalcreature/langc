@@ -74,7 +74,7 @@ token.types = setmetatable({}, {
 			if type(v) == "string" then
 				if v == "keyword" then
 					tokentype = token.type(v, k)
-					tokentype.color = "#Y"
+					tokentype.color = "#bM"
 					rawset(self, k, tokentype)
 				else
 					tokentype = token.type(v, k, ".")
