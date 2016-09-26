@@ -40,7 +40,14 @@ for i, param in ipairs(params) do
 	end
 end
 
+token.type("local", "local")
+token.type("foo", "foo")
+token.type("bar", "bar")
+token.type("assignment operator", "=", "[^=]")
+
 for _, ifile in ipairs(ifiles) do
-	token:tokenize(ifile)
+	for t, l, c in token.tokenize(ifile) do
+		print(t, l, c)
+	end
 	ifile:close()
 end
