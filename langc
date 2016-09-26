@@ -52,11 +52,25 @@ token.types["while"] = "keyword"
 token.types["repeat"] = "keyword"
 token.types["until"] = "keyword"
 
-token.types["="] = "assignment operator"
-token.types["+"] = "addition operator"
-token.types["-"] = "subtraction operator"
-token.types["+="] = "addition assignment operator"
-token.types["-="] = "subtraction assignment operator"
+token.types["="] = "assign"
+token.types["+"] = "add"
+token.types["-"] = "subtract"
+token.types["*"] = "multiply"
+token.types["/"] = "divide"
+token.types["%"] = "modulus"
+token.types[".."] = "concat"
+
+token.types["["] = "lbracket"
+token.types["]"] = "rbracket"
+token.types["{"] = "lbrace"
+token.types["}"] = "rbrace"
+token.types["("] = "lparen"
+token.types[")"] = "rparen"
+
+token.types["."] = "dot"
+token.types[":"] = "colon"
+token.types[";"] = "semicolon"
+token.types[","] = "comma"
 
 function token.types:identifier(c)
 	if not self.value then
@@ -113,6 +127,48 @@ function token.types:intliteral(c)
 		else
 			return true
 		end
+	end
+end
+
+local escapechars = {
+	n = "\n",
+	r = "\r",
+	t = "\t",
+	["\\"] = "\\",
+	["\""] = "\"",
+	["\'"] = "\'",
+}
+
+function token.types:stringliteral(c)
+	if not self.value then
+		if c:match("[\"\']") then
+			self.mode = c
+			self.value = ""
+			return
+		else
+			return true
+		end
+	end
+	if self.mode == "done" then
+		self.mode = nil
+		self.escape = nil
+		return self()
+	end
+	if (not self.escape) and c == self.mode then
+		self.mode = "done"
+	else
+		if c == "\n" then return true end
+		if self.escape then
+			c = escapechars[c]
+			self.escape = false
+			if not c then return true end
+		else
+			if c == "\\" then
+				self.escape = true
+				return
+			end
+		end
+		self.value = self.value..c
 	end
 end
 

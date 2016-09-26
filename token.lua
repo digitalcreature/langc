@@ -8,7 +8,7 @@ token.type = setmetatable({}, {
 		local t = {}
 		t.__index = t
 		function t:__tostring()
-			return string.format("token[%s (%s)]", self.value, self.type.name)
+			return string.format("#Rtoken#[#G%s# (#B%s#)]", tostring(self.value), self.type.name)
 		end
 		t.type = t
 		t.name = name
@@ -53,7 +53,7 @@ token.type = setmetatable({}, {
 	end
 
 	function tt:__tostring()
-		return string.format("tokentype[%s (%s)]", self.name, self.value)
+		return string.format("#ftokentype#[%s (%s)]", self.name, self.value)
 	end
 
 	--initialize a new token instance of this token type, with the passed value as that token's value.
@@ -74,7 +74,7 @@ token.types = setmetatable({}, {
 				if v == "keyword" then
 					tokentype = token.type(v, k)
 					rawset(self, k, tokentype)
-				elseif v:match("operator") then
+				else
 					tokentype = token.type(v, k, ".")
 					rawset(self, v, tokentype)
 				end
@@ -83,6 +83,9 @@ token.types = setmetatable({}, {
 				tokentype.nextchar = v
 				tokentype.iscustom = true
 				rawset(self, k, tokentype)
+			end
+			if tokentype then
+				rawset(self, #self + 1, tokentype)
 			end
 		else
 			rawset(self, k, v)
@@ -117,7 +120,7 @@ function token.tokenize(file)
 		local fragment = ""
 		local candidates = {}
 		local remaining = 0
-		for _, type in pairs(token.types) do
+		for i, type in ipairs(token.types) do
 			type:startmatching()
 			candidates[type] = true
 			remaining = remaining + 1
@@ -125,20 +128,22 @@ function token.tokenize(file)
 		local lastmatch, lastsl, lastsc, lastl, lastc
 		while next do
 			fragment = fragment..next
-			for type in pairs(candidates) do
-				local result = type:nextchar(next)
-				if result == true then
-					candidates[type] = nil
-					remaining = remaining - 1
-				else
-					if result then
-						if remaining == 1 then
-							return result, sl, sc, l, c
-						else
-							candidates[type] = nil
-							remaining = remaining - 1
-							lastmatch, lastsl, lastsc, lastl, lastc
-								= result, sl, sc, l, c
+			for _, type in ipairs(token.types) do
+				if candidates[type] then
+					local result = type:nextchar(next)
+					if result == true then
+						candidates[type] = nil
+						remaining = remaining - 1
+					else
+						if result then
+							if remaining == 1 then
+								return result, sl, sc, l, c
+							else
+								candidates[type] = nil
+								remaining = remaining - 1
+								lastmatch, lastsl, lastsc, lastl, lastc
+									= result, sl, sc, l, c
+							end
 						end
 					end
 				end
