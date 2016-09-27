@@ -40,15 +40,15 @@ token.type = setmetatable({}, {
 	function tt:nextchar(char)
 		if self.i == #self.value then
 			if char:match(self.finalpattern) then
-				return self()
+				return self.value
 			else
-				return true
+				return nil, true
 			end
 		else
 			if char == self.value:sub(self.i + 1, self.i + 1) then
 				self.i = self.i + 1
 			else
-				return true
+				return nil, true
 			end
 		end
 	end
@@ -58,9 +58,12 @@ token.type = setmetatable({}, {
 	end
 
 	--initialize a new token instance of this token type, with the passed value as that token's value.
-	function tt:__call(value)
+	function tt:__call(value, line, column, cursor)
 		local token = setmetatable({
 			value = value,
+			line = line,
+			column = column,
+			cursor = cursor,
 		}, self)
 		return token
 	end
@@ -78,7 +81,7 @@ token.types = setmetatable({}, {
 					rawset(self, k, tokentype)
 				else
 					tokentype = token.type(v, k, ".")
-					rawset(self, v, tokentype)
+					rawset(self, k, tokentype)
 				end
 			elseif type(v) == "function" then
 				tokentype = token.type(k, "")
@@ -105,7 +108,6 @@ function token.tokenize(file)
 	local next
 	local function getnext()
 		next = file:read(1)
-		if next == "\r" then next = file:read(1) end
 		if next == "\n" then
 			c = 0
 			l = l + 1
@@ -118,33 +120,50 @@ function token.tokenize(file)
 	return function()
 		while next and next:match("%s") do getnext() end
 		if not next then return end
-		local sl, sc = l, c	--line and column start counts for this token
-		local fragment = ""
-		local candidates = {}
-		local remaining = 0
+		local sl, sc = l, c			-- line and column start counts for this token
+		local fragment = ""			-- the total raw text that has been read during this match attempt
+		local candidates = {}		-- the set of all types that haven't matched or failed yet
+		local remaining = 0			-- the count of remaining candidates
 		for i, type in ipairs(token.types) do
 			type:startmatching()
 			candidates[type] = true
 			remaining = remaining + 1
 		end
+		local lastmatch				-- last matched token
+		local lasterror				-- error returned from last failed match
 		while next do
 			fragment = fragment..next
 			for _, type in ipairs(token.types) do
 				if candidates[type] then
 					local result, error = type:nextchar(next)
-					if result == true then
+					if error then
 						candidates[type] = nil
 						remaining = remaining - 1
-						if remaining == 0 then
-							getnext()
-							return string.format("#bRcould not parse token \'#%s#bR\'#", fragment)
-								..(error and ":\n"..error or ""), sl, sc, l, c
-						end
-					else
-						if result then
-							return result, sl, sc, l, c
-						end
+						lasterror = error
+					elseif result then
+						candidates[type] = nil
+						remaining = remaining - 1
+						lastmatch = type(result, l, c, file:seek())
 					end
+				end
+			end
+			if remaining == 0 then
+				if lastmatch then
+					l, c = lastmatch.line, lastmatch.column
+					file:seek("set", lastmatch.cursor)
+					lastmatch.line = sl
+					lastmatch.column = sc
+					lastmatch.failed = false
+					return lastmatch
+				else
+					getnext()
+					return {
+						failed = true,
+						line = sl,
+						column = sc,
+						value = fragment,
+						error = lasterror
+					}
 				end
 			end
 			getnext()

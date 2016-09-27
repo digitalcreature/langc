@@ -45,8 +45,15 @@ end
 -- end
 
 for _, ifile in ipairs(ifiles) do
-	for t, l, c in token.tokenize(ifile) do
-		print(t, l, c, type(t) == "table" and t.type)
+	for t in token.tokenize(ifile) do
+		if t.failed then
+			printf("#bRfailed to parse token \'#%s#bR\'#", t.value)
+			if type(t.error) == "string" then
+				printf("#bR%s#", t.error)
+			end
+		else
+			print(t, t.type)
+		end
 	end
 	ifile:close()
 end
